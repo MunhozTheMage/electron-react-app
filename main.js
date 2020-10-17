@@ -1,5 +1,7 @@
-const { win, BrowserWindow, app } = require("electron");
+const { BrowserWindow, app, ipcMain, Notification } = require("electron");
 const path = require('path');
+
+const isDev = !app.isPackaged;
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -9,15 +11,22 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             worldSafeExecuteJavaScript: true,
-            contextIsolation: true
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js')
         }
     });
 
     win.loadFile("index.html");
 }
 
-require("electron-reload")(__dirname, {
-    electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
+if(isDev) {
+    require("electron-reload")(__dirname, {
+        electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
+    });
+}
+
+ipcMain.on("notify", (e, message) => {
+    new Notification({title: "Notification", body: message}).show();
 });
 
 app.whenReady().then(createWindow);
